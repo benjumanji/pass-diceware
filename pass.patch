@@ -1,0 +1,43 @@
+--- /usr/bin/pass	2018-08-05 19:13:13.000000000 +0100
++++ /usr/bin/pass	2019-03-19 14:19:34.367198550 +0000
+@@ -16,7 +16,7 @@
+ EXTENSIONS="${PASSWORD_STORE_EXTENSIONS_DIR:-$PREFIX/.extensions}"
+ X_SELECTION="${PASSWORD_STORE_X_SELECTION:-clipboard}"
+ CLIP_TIME="${PASSWORD_STORE_CLIP_TIME:-45}"
+-GENERATED_LENGTH="${PASSWORD_STORE_GENERATED_LENGTH:-25}"
++GENERATED_LENGTH="${PASSWORD_STORE_GENERATED_LENGTH:-6}"
+ CHARACTER_SET="${PASSWORD_STORE_CHARACTER_SET:-[:graph:]}"
+ CHARACTER_SET_NO_SYMBOLS="${PASSWORD_STORE_CHARACTER_SET_NO_SYMBOLS:-[:alnum:]}"
+ 
+@@ -272,10 +272,10 @@
+ 	        Insert new password. Optionally, echo the password back to the console
+ 	        during entry. Or, optionally, the entry may be multiline. Prompt before
+ 	        overwriting existing password unless forced.
+-	    $PROGRAM edit pass-name
++	    $PROGRAM c\ edit pass-name
+ 	        Insert a new password or edit an existing password using ${EDITOR:-vi}.
+-	    $PROGRAM generate [--no-symbols,-n] [--clip,-c] [--in-place,-i | --force,-f] pass-name [pass-length]
+-	        Generate a new password of pass-length (or $GENERATED_LENGTH if unspecified) with optionally no symbols.
++	    $PROGRAM generate [--clip,-c] [--in-place,-i | --force,-f] pass-name [num-words]
++	        Generate a new password of num-words (or $GENERATED_LENGTH words if unspecified) with optionally no symbols.
+ 	        Optionally put it on the clipboard and clear board after $CLIP_TIME seconds.
+ 	        Prompt before overwriting existing password unless forced.
+ 	        Optionally replace only the first line of an existing file with a new password.
+@@ -494,7 +494,6 @@
+ 	local err=$?
+ 	eval set -- "$opts"
+ 	while true; do case $1 in
+-		-n|--no-symbols) characters="$CHARACTER_SET_NO_SYMBOLS"; shift ;;
+ 		-q|--qrcode) qrcode=1; shift ;;
+ 		-c|--clip) clip=1; shift ;;
+ 		-f|--force) force=1; shift ;;
+@@ -515,8 +514,7 @@
+ 
+ 	[[ $inplace -eq 0 && $force -eq 0 && -e $passfile ]] && yesno "An entry already exists for $path. Overwrite it?"
+ 
+-	read -r -n $length pass < <(LC_ALL=C tr -dc "$characters" < /dev/urandom)
+-	[[ ${#pass} -eq $length ]] || die "Could not generate password from /dev/urandom."
++	pass=$(diceware -d' ' --no-caps -n "$length")
+ 	if [[ $inplace -eq 0 ]]; then
+ 		echo "$pass" | $GPG -e "${GPG_RECIPIENT_ARGS[@]}" -o "$passfile" "${GPG_OPTS[@]}" || die "Password encryption aborted."
+ 	else
